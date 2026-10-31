@@ -59,16 +59,110 @@ Every API error response follows this exact JSON structure:
 
 ---
 
-## 4. Planned Endpoint Modules (Phases 2-7)
+## 4. Auth & Roles Endpoints (Phase 2)
 
-* **Phase 2 (Auth & Roles):**
-  * `POST /api/auth/signup` (Creates customer)
-  * `POST /api/auth/login` (Issues httpOnly JWT cookie)
-  * `POST /api/auth/logout` (Clears cookie)
-  * `POST /api/auth/forgot-password` (Sends reset email via Mailpit)
-  * `POST /api/auth/reset-password` (Consumes single-use hashed token)
-  * `GET /api/auth/me` (Current authenticated user profile & role)
-  * `POST /api/users/staff` (Admin creates staff user)
+### 4.1 `POST /api/auth/signup`
+Creates a new **customer** account.
+* **Auth:** None
+* **Request body:**
+  ```json
+  { "name": "Jane Doe", "email": "jane@example.com", "password": "Secure@123" }
+  ```
+  * `name` — 2–100 chars
+  * `email` — valid email, normalised to lowercase
+  * `password` — min 9 chars, must contain uppercase, lowercase, digit, and special char
+* **Response `201 Created`:**
+  ```json
+  { "id": 42, "name": "Jane Doe", "email": "jane@example.com", "role": "customer" }
+  ```
+* **Errors:** `400 VALIDATION_ERROR`, `409 CONFLICT` (email already registered)
+
+---
+
+### 4.2 `POST /api/auth/login`
+Authenticates user. Sets `token` httpOnly cookie (7-day expiry).
+* **Auth:** None
+* **Request body:**
+  ```json
+  { "email": "jane@example.com", "password": "Secure@123" }
+  ```
+* **Response `200 OK`:**
+  ```json
+  { "id": 42, "name": "Jane Doe", "email": "jane@example.com", "role": "customer" }
+  ```
+* **Errors:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED` (generic message "Invalid email or password" — no user enumeration)
+* **Note:** Cookie is `httpOnly`, `sameSite: lax`. CORS configured for `http://localhost:5173` with `credentials: true`.
+
+---
+
+### 4.3 `POST /api/auth/logout`
+Clears the auth cookie.
+* **Auth:** None required (safe to call when logged out)
+* **Response `200 OK`:**
+  ```json
+  { "message": "Logged out successfully." }
+  ```
+
+---
+
+### 4.4 `GET /api/auth/me`
+Returns the currently authenticated user's profile.
+* **Auth:** Required (any role)
+* **Response `200 OK`:**
+  ```json
+  { "id": 42, "name": "Jane Doe", "email": "jane@example.com", "role": "customer" }
+  ```
+* **Errors:** `401 UNAUTHORIZED`
+
+---
+
+### 4.5 `POST /api/auth/forgot-password`
+Sends a password-reset link to the given email address via Mailpit (dev: `http://localhost:8025`).
+* **Auth:** None
+* **Request body:**
+  ```json
+  { "email": "jane@example.com" }
+  ```
+* **Response `200 OK`** (always — even if email not registered, to prevent user enumeration):
+  ```json
+  { "message": "If that email is registered, a reset link has been sent." }
+  ```
+* **Note:** Reset token is hashed (SHA-256) before storage. The link contains the raw token. Token expires in 1 hour and is single-use.
+
+---
+
+### 4.6 `POST /api/auth/reset-password`
+Consumes a password-reset token and sets a new password.
+* **Auth:** None
+* **Request body:**
+  ```json
+  { "token": "<raw-reset-token>", "password": "NewSecure@456" }
+  ```
+  * `password` — same complexity rules as signup
+* **Response `200 OK`:**
+  ```json
+  { "message": "Password reset successfully." }
+  ```
+* **Errors:** `400 VALIDATION_ERROR` (invalid/expired token, or password fails complexity)
+
+---
+
+### 4.7 `POST /api/users/staff`
+Admin creates a staff user. Staff cannot self-register via `/signup`.
+* **Auth:** Required — **Admin only**
+* **Request body:**
+  ```json
+  { "name": "Bob Staff", "email": "bob@brightloop.io", "password": "Staff@Pass9" }
+  ```
+* **Response `201 Created`:**
+  ```json
+  { "id": 99, "name": "Bob Staff", "email": "bob@brightloop.io", "role": "staff" }
+  ```
+* **Errors:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 CONFLICT`
+
+---
+
+## 5. Planned Endpoint Modules (Phases 3-7)
 
 * **Phase 3 (Catalog - Admin only):**
   * `GET/POST /api/products`, `PUT/DELETE /api/products/:id`
