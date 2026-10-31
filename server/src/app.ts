@@ -7,6 +7,8 @@ import { randomUUID } from 'crypto';
 import { logger } from './utils/logger.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ValidationError, NotFoundError, BusinessRuleError } from './errors/AppError.js';
+import { authRouter } from './routes/auth.routes.js';
+import { userRouter } from './routes/user.routes.js';
 
 export const app = express();
 
@@ -57,6 +59,10 @@ app.get('/api/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Authentication & User management routes
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
 
 // Test endpoints for verifying error handling structure
 app.get('/api/test/validation-error', () => {
