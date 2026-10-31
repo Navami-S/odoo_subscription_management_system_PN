@@ -10,6 +10,7 @@ import { ValidationError, NotFoundError, BusinessRuleError } from './errors/AppE
 import { authRouter } from './routes/auth.routes.js';
 import { userRouter } from './routes/user.routes.js';
 import { catalogRouter } from './routes/catalog.routes.js';
+import { subscriptionRouter } from './routes/subscription.routes.js';
 
 export const app = express();
 
@@ -67,6 +68,9 @@ app.use('/api/users', userRouter);
 
 // Catalog routes (products, taxes, payment-terms, plans, discounts)
 app.use('/api', catalogRouter);
+
+// Subscription & Quotation template routes
+app.use('/api', subscriptionRouter);
 
 // Test endpoints for verifying error handling structure
 app.get('/api/test/validation-error', () => {
