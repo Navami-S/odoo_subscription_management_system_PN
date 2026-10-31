@@ -1,0 +1,105 @@
+/*
+ * BRIGHTLOOP DESIGN TOKENS
+ * Single source of truth. No hex values anywhere else in /client.
+ * Values refined by eyedropping the reference screenshots (docs/reference/).
+ * Section 6.1 of RULES.md is the authoritative spec.
+ *
+ * NEVER hard-code a color in a component. Use these tokens only.
+ */
+
+:root {
+  /* ── Backgrounds ─────────────────────────────────────────── */
+  --bg-base:        #0A0820;   /* page background — deep navy-violet        */
+  --bg-surface:     #120F2C;   /* cards / panels                            */
+  --bg-surface-2:   #1A1640;   /* raised tiles, hover states, inputs        */
+
+  /* ── Borders ─────────────────────────────────────────────── */
+  --border-subtle:  rgba(255, 255, 255, 0.08);
+
+  /* ── Typography ──────────────────────────────────────────── */
+  --text-primary:   #FFFFFF;
+  --text-muted:     #8E8AB0;
+
+  /* ── Accent palette ──────────────────────────────────────── */
+  --accent-lime:         #C6F432;   /* primary: active nav, key numbers, +delta, primary btn */
+  --accent-violet:       #B04CF5;   /* secondary: second data series, secondary bars          */
+  --accent-violet-deep:  #6B2FD0;
+
+  /* ── Semantic ────────────────────────────────────────────── */
+  --danger: #FF5C7A;   /* overdue / error states ONLY */
+
+  /* ── Glow / ambient ──────────────────────────────────────── */
+  --glow-lime:   rgba(198, 244, 50, 0.25);
+
+  /* ── Page frame gradient (outer shell behind the app) ────── */
+  --page-gradient: linear-gradient(135deg, #9B7BE0 0%, #C9D85A 100%);
+
+  /* ── Radius scale ────────────────────────────────────────── */
+  --radius-card:  20px;   /* cards, panels         */
+  --radius-tile:  14px;   /* inner tiles, inputs   */
+  --radius-chip:  9999px; /* chips, pill bars      */
+
+  /* ── Spacing (8px base grid) ─────────────────────────────── */
+  --space-1:  8px;
+  --space-2:  16px;
+  --space-3:  24px;   /* page padding */
+  --space-4:  32px;
+  --space-5:  40px;
+
+  --page-padding: var(--space-3);   /* 24px */
+  --card-padding: 20px;
+  --card-gap:     var(--space-2);   /* 16px */
+
+  /* ── Glass card surface ──────────────────────────────────── */
+  --glass-bg:     rgba(18, 15, 44, 0.72);
+  --glass-border: var(--border-subtle);
+  --glass-blur:   12px;
+
+  /* ── Typography scale ────────────────────────────────────── */
+  --font-family:  "Plus Jakarta Sans", sans-serif;
+
+  --text-xs:   0.75rem;    /* 12px — tiny labels        */
+  --text-sm:   0.875rem;   /* 14px — table cells, muted */
+  --text-base: 1rem;       /* 16px — body               */
+  --text-lg:   1.125rem;   /* 18px — card labels        */
+  --text-xl:   1.25rem;    /* 20px — sub-headings       */
+  --text-2xl:  1.5rem;     /* 24px — KPI numbers        */
+  --text-3xl:  1.875rem;   /* 30px — big numbers        */
+  --text-4xl:  2.25rem;    /* 36px — greeting name      */
+
+  --font-normal:   400;
+  --font-medium:   500;
+  --font-semibold: 600;
+  --font-bold:     700;
+
+  /* ── Transitions ─────────────────────────────────────────── */
+  --transition-fast:   150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+/* ── Light theme stub (P2 — theme toggle) ─────────────────────
+   Wire data-theme="light" on <html> now so retrofitting is zero work.
+   Values are intentionally minimal until the toggle ships (P2).
+   ──────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-base:      #F4F3FF;
+  --bg-surface:   #FFFFFF;
+  --bg-surface-2: #EDEDF8;
+  --text-primary: #0A0820;
+  --text-muted:   #5A567A;
+  --glass-bg:     rgba(255, 255, 255, 0.72);
+}
+
+/* ── Reduced motion — global, never removed ──────────────────
+   Must be respected on every animation and transition.
+   ──────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,77 @@
+/* Import design tokens first — they define every CSS custom property */
+@import './tokens.css';
+
+/* Tailwind layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base resets ──────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-family: var(--font-family);
+    font-size: 16px;
+    color: var(--text-primary);
+    background-color: var(--bg-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100dvh;
+    /* Outer frame gradient matches reference */
+    background: var(--page-gradient);
+  }
+
+  /* Default focus ring — lime, visible, matches design */
+  :focus-visible {
+    outline: 2px solid var(--accent-lime);
+    outline-offset: 2px;
+    border-radius: var(--radius-tile);
+  }
+}
+
+/* ── Reusable glass surface utility ─────────────────────────
+   Apply .glass to any card/panel container.
+   ──────────────────────────────────────────────────────────── */
+@layer components {
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    /* Soft inner glow — not heavy drop shadow */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 4px 24px rgba(0, 0, 0, 0.32);
+  }
+
+  .glass-tile {
+    background: var(--bg-surface-2);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-tile);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Striped progress bar fill — repeating-linear-gradient at ~70deg */
+  .stripe-fill {
+    background: repeating-linear-gradient(
+      70deg,
+      var(--accent-lime) 0px,
+      var(--accent-lime) 4px,
+      var(--accent-violet) 4px,
+      var(--accent-violet) 8px
+    );
+    border-radius: var(--radius-chip);
+  }
+}
