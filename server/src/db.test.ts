@@ -287,3 +287,4 @@ describe('MySQL 8.0.16+ Database Invariant & Constraint Tests (Section 7.5)', ()
     ).rejects.toThrow();
   });
 });
+
