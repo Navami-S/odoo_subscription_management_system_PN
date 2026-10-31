@@ -374,14 +374,200 @@ Admin creates a staff user. Staff cannot self-register via `/signup`.
 
 ---
 
-## 6. Planned Endpoint Modules (Phases 4-7)
+## 6. Quotation Templates & Subscriptions (Phase 4)
 
-* **Phase 4 (Subscriptions):**
-  * `GET/POST /api/quotation-templates`
-  * `GET/POST /api/subscriptions`
-  * `POST /api/subscriptions/from-template`
-  * `PATCH /api/subscriptions/:id/status` (Enforces Draft -> Quotation -> Confirmed -> Active -> Closed)
-  * `GET /api/subscriptions/:id/history`
+### 6.1 Quotation Templates
+
+#### `GET /api/quotation-templates`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Array of quotation templates with their lines and plan:
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "Standard Cloud Pack",
+      "planId": 1,
+      "validityDays": 30,
+      "plan": { "id": 1, "name": "Basic Monthly", "price": "49.00" },
+      "lines": [
+        {
+          "id": 1,
+          "templateId": 1,
+          "productId": 2,
+          "variantId": 1,
+          "quantity": 2,
+          "product": { "id": 2, "name": "Cloud Storage", "salesPrice": "10.00" },
+          "variant": { "id": 1, "attribute": "Size", "value": "1TB", "extraPrice": "5.00" }
+        }
+      ]
+    }
+  ]
+  ```
+
+#### `GET /api/quotation-templates/:id`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Single quotation template object with lines and plan.
+* **Errors:** `404 NOT_FOUND`
+
+#### `POST /api/quotation-templates`
+* **Auth:** Required — **Admin only**
+* **Request body:**
+  ```json
+  {
+    "name": "Enterprise Bundle",
+    "planId": 1,
+    "validityDays": 45,
+    "lines": [
+      {
+        "productId": 1,
+        "variantId": 2,
+        "quantity": 1
+      }
+    ]
+  }
+  ```
+* **Response `201 Created`:** Created quotation template object.
+* **Errors:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`
+
+#### `PUT /api/quotation-templates/:id`
+* **Auth:** Required — **Admin only**
+* **Request body:** Partial quotation template fields, optionally replacing `lines`.
+* **Response `200 OK`:** Updated quotation template object.
+
+#### `DELETE /api/quotation-templates/:id`
+* **Auth:** Required — **Admin only**
+* **Response `200 OK`:** `{ "message": "Quotation template deleted successfully." }`
+
+---
+
+### 6.2 Subscriptions
+
+#### `GET /api/subscriptions`
+* **Auth:** Required (`admin`, `staff`)
+* **Query Parameters:**
+  * `page` (default `1`)
+  * `limit` (default `20`, max `100`)
+  * `status` (optional filter: `"draft" | "quotation" | "confirmed" | "active" | "closed"`)
+  * `customerId` (optional integer filter)
+  * `search` (optional string search matching number or customer name)
+* **Response `200 OK`:**
+  ```json
+  {
+    "data": [
+      {
+        "id": 101,
+        "number": "SUB-2026-000101",
+        "customerId": 5,
+        "planId": 1,
+        "paymentTermId": 2,
+        "startDate": "2026-11-01T00:00:00.000Z",
+        "expiryDate": "2026-12-01T00:00:00.000Z",
+        "status": "draft",
+        "nextBillingDate": null,
+        "customer": { "id": 5, "name": "Acme Corp" },
+        "plan": { "id": 1, "name": "Basic Monthly", "price": "49.00" },
+        "paymentTerm": { "id": 2, "name": "Net 30", "dueDays": 30 },
+        "lines": [
+          {
+            "id": 1,
+            "productId": 1,
+            "quantity": 2,
+            "unitPrice": "25.00",
+            "amount": "50.00",
+            "product": { "name": "User Seat" }
+          }
+        ]
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1,
+      "totalPages": 1
+    }
+  }
+  ```
+
+#### `GET /api/subscriptions/:id`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Full subscription object with customer, plan, payment term, lines, and ordered status history.
+* **Errors:** `404 NOT_FOUND`
+
+#### `POST /api/subscriptions`
+* **Auth:** Required (`admin`, `staff`)
+* **Request body:**
+  ```json
+  {
+    "customerId": 5,
+    "planId": 1,
+    "paymentTermId": 2,
+    "startDate": "2026-11-01T00:00:00.000Z",
+    "expiryDate": "2026-12-01T00:00:00.000Z",
+    "lines": [
+      {
+        "productId": 1,
+        "variantId": 2,
+        "quantity": 2,
+        "unitPrice": 49.99,
+        "taxId": 1
+      }
+    ]
+  }
+  ```
+  * Note: `unitPrice` is optional. If omitted, it automatically snapshots `product.sales_price` + variant `extra_price`.
+* **Response `201 Created`:** Created subscription in `draft` status with snapshot line items and initial history record.
+* **Errors:** `400 VALIDATION_ERROR` (`expiryDate` must be after `startDate`)
+
+#### `POST /api/subscriptions/from-template`
+* **Auth:** Required (`admin`, `staff`)
+* **Request body:**
+  ```json
+  {
+    "templateId": 1,
+    "customerId": 5,
+    "paymentTermId": 2,
+    "startDate": "2026-11-01T00:00:00.000Z"
+  }
+  ```
+* **Response `201 Created`:** Created subscription in `draft` status copying lines from template with snapshotted current prices and calculated `expiryDate`.
+
+#### `PATCH /api/subscriptions/:id/status`
+* **Auth:** Required (`admin`, `staff`)
+* **Request body:**
+  ```json
+  {
+    "status": "quotation"
+  }
+  ```
+* **Allowed Transitions:**
+  * `draft` -> `quotation`, `closed`
+  * `quotation` -> `confirmed`, `closed`
+  * `confirmed` -> `active`, `closed`
+  * `active` -> `closed`
+  * `closed` -> (terminal; no transitions permitted)
+* **Response `200 OK`:** Updated subscription. When transitioning to `active`, sets `nextBillingDate = startDate` if not already set.
+* **Errors:** `422 BUSINESS_RULE_ERROR` on illegal transitions (e.g. `draft` -> `active` directly, or transitions from `closed`).
+
+#### `GET /api/subscriptions/:id/history`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Ordered audit trail of status transitions:
+  ```json
+  [
+    {
+      "id": 1,
+      "subscriptionId": 101,
+      "fromStatus": "draft",
+      "toStatus": "quotation",
+      "changedBy": 6,
+      "changedAt": "2026-11-01T09:30:00.000Z",
+      "user": { "id": 6, "email": "staff1@brightloop.io", "role": "staff" }
+    }
+  ]
+  ```
+
+---
+
+## 7. Planned Endpoint Modules (Phases 5-7)
 
 * **Phase 5 (Billing):**
   * `POST /api/billing/run` (Finds active due subscriptions, generates invoices idempotently)
