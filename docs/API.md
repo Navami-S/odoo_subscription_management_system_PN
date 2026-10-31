@@ -162,15 +162,219 @@ Admin creates a staff user. Staff cannot self-register via `/signup`.
 
 ---
 
-## 5. Planned Endpoint Modules (Phases 3-7)
+## 5. Catalog Endpoints (Phase 3)
 
-* **Phase 3 (Catalog - Admin only):**
-  * `GET/POST /api/products`, `PUT/DELETE /api/products/:id`
-  * `POST /api/products/:id/variants`
-  * `GET/POST /api/plans`, `PUT /api/plans/:id`
-  * `GET/POST /api/taxes`
-  * `GET/POST /api/payment-terms`
-  * `GET/POST /api/discounts`
+### 5.1 Products & Variants
+
+#### `GET /api/products`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Array of products with their variants:
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "Cloud Backup Service",
+      "type": "service",
+      "salesPrice": "99.99",
+      "costPrice": "20.00",
+      "notes": "Daily automated backups",
+      "isActive": true,
+      "createdAt": "2026-10-31T09:00:00.000Z",
+      "updatedAt": "2026-10-31T09:00:00.000Z",
+      "variants": [
+        {
+          "id": 1,
+          "productId": 1,
+          "attribute": "Storage",
+          "value": "1TB",
+          "extraPrice": "20.00"
+        }
+      ]
+    }
+  ]
+  ```
+
+#### `GET /api/products/:id`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Single product object with `variants`.
+* **Errors:** `404 NOT_FOUND`
+
+#### `POST /api/products`
+* **Auth:** Required — **Admin only**
+* **Request body:**
+  ```json
+  {
+    "name": "Cloud Backup Service",
+    "type": "service",
+    "salesPrice": 99.99,
+    "costPrice": 20.00,
+    "notes": "Optional notes",
+    "isActive": true
+  }
+  ```
+* **Response `201 Created`:** Created product object.
+* **Errors:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`
+
+#### `PUT /api/products/:id`
+* **Auth:** Required — **Admin only**
+* **Request body:** Partial product fields to update.
+* **Response `200 OK`:** Updated product object.
+* **Errors:** `400 VALIDATION_ERROR`, `404 NOT_FOUND`
+
+#### `DELETE /api/products/:id`
+* **Auth:** Required — **Admin only**
+* **Behavior:** Soft deletes by setting `isActive = false`.
+* **Response `200 OK`:** `{ "message": "Product deactivated successfully." }`
+
+#### `POST /api/products/:id/variants`
+* **Auth:** Required — **Admin only**
+* **Request body:**
+  ```json
+  {
+    "attribute": "Storage",
+    "value": "1TB",
+    "extraPrice": 20.00
+  }
+  ```
+* **Response `201 Created`:** Created variant object.
+* **Errors:** `400 VALIDATION_ERROR`, `409 CONFLICT` (variant attribute/value combination exists for product)
+
+#### `PUT /api/products/:id/variants/:vid`
+* **Auth:** Required — **Admin only**
+* **Request body:** Partial variant fields.
+* **Response `200 OK`:** Updated variant object.
+
+---
+
+### 5.2 Taxes
+
+#### `GET /api/taxes`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Array of tax objects (`id`, `name`, `ratePercent`, `isActive`).
+
+#### `GET /api/taxes/:id`
+* **Auth:** Required (`admin`, `staff`)
+
+#### `POST /api/taxes`
+* **Auth:** Required — **Admin only**
+* **Request body:**
+  ```json
+  {
+    "name": "Standard GST",
+    "ratePercent": 18.00,
+    "isActive": true
+  }
+  ```
+* **Response `201 Created`:** Created tax object.
+* **Errors:** `400 VALIDATION_ERROR` (ratePercent must be between 0 and 100)
+
+#### `PUT /api/taxes/:id`
+* **Auth:** Required — **Admin only**
+* **Response `200 OK`:** Updated tax object.
+
+---
+
+### 5.3 Payment Terms
+
+#### `GET /api/payment-terms`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Array of payment terms (`id`, `name`, `dueDays`).
+
+#### `GET /api/payment-terms/:id`
+* **Auth:** Required (`admin`, `staff`)
+
+#### `POST /api/payment-terms`
+* **Auth:** Required — **Admin only**
+* **Request body:**
+  ```json
+  {
+    "name": "Net 30",
+    "dueDays": 30
+  }
+  ```
+* **Response `201 Created`:** Created payment term object.
+* **Errors:** `400 VALIDATION_ERROR` (dueDays must be >= 0 integer)
+
+#### `PUT /api/payment-terms/:id`
+* **Auth:** Required — **Admin only**
+
+---
+
+### 5.4 Plans
+
+#### `GET /api/plans`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Array of plans (`id`, `name`, `price`, `billingPeriod`, `minQuantity`, `availableFrom`, `availableTo`, `status`).
+
+#### `GET /api/plans/:id`
+* **Auth:** Required (`admin`, `staff`)
+
+#### `POST /api/plans`
+* **Auth:** Required — **Admin only**
+* **Request body:**
+  ```json
+  {
+    "name": "Enterprise Annual",
+    "price": 1200.00,
+    "billingPeriod": "yearly",
+    "minQuantity": 1,
+    "availableFrom": "2026-01-01T00:00:00.000Z",
+    "availableTo": "2027-01-01T00:00:00.000Z",
+    "autoCloseOnEnd": true,
+    "closable": true,
+    "pausable": true,
+    "renewable": true,
+    "status": "active"
+  }
+  ```
+  * `billingPeriod`: `"daily" | "weekly" | "monthly" | "yearly"`
+* **Response `201 Created`:** Created plan object.
+* **Errors:** `400 VALIDATION_ERROR` (`availableTo` must be >= `availableFrom`)
+
+#### `PUT /api/plans/:id`
+* **Auth:** Required — **Admin only**
+
+---
+
+### 5.5 Discounts
+
+#### `GET /api/discounts`
+* **Auth:** Required (`admin`, `staff`)
+* **Response `200 OK`:** Array of discounts including linked `discountProducts`.
+
+#### `GET /api/discounts/:id`
+* **Auth:** Required (`admin`, `staff`)
+
+#### `POST /api/discounts`
+* **Auth:** Required — **Admin only**
+* **Request body:**
+  ```json
+  {
+    "name": "Early Bird 15%",
+    "type": "percent",
+    "value": 15.00,
+    "minPurchase": 0,
+    "minQuantity": 0,
+    "startDate": "2026-01-01T00:00:00.000Z",
+    "endDate": "2026-12-31T23:59:59.000Z",
+    "usageLimit": 500,
+    "appliesTo": "subscription",
+    "isActive": true,
+    "productIds": [1, 2]
+  }
+  ```
+  * `type`: `"fixed" | "percent"` (if `percent`, `value` cannot exceed 100)
+  * `appliesTo`: `"product" | "subscription"`
+* **Response `201 Created`:** Created discount object with `discountProducts`.
+* **Errors:** `400 VALIDATION_ERROR` (`endDate` must be >= `startDate`, `value` bounds)
+
+#### `PUT /api/discounts/:id`
+* **Auth:** Required — **Admin only**
+* **Response `200 OK`:** Updated discount object with `discountProducts`.
+
+---
+
+## 6. Planned Endpoint Modules (Phases 4-7)
 
 * **Phase 4 (Subscriptions):**
   * `GET/POST /api/quotation-templates`
