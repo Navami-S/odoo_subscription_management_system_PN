@@ -43,22 +43,10 @@ docker-compose.yml
 RULES.md   Project rules used by our AI coding agent
 ```
 
-## Getting started
-
-> Update these commands if they change during development.
-
-1. Clone the repo and copy `.env.example` to `.env` in `/server`
-2. Start the database and mail catcher: `docker compose up -d`
-3. In `/server`: `npm install`, `npx prisma migrate deploy`, `npm run seed`, `npm run dev`
-4. In `/client`: `npm install`, `npm run dev`
-5. Open `http://localhost:5173`
-
-Demo accounts: `[admin email / password]`, `[staff email / password]`, `[customer email / password]`
-
 ## Team and workflow
 
-- **[Name A]:** database and backend
-- **[Name B]:** frontend and design system
+- **[1]:** database and backend
+- **[2]:** frontend and design system
 - Feature branches per task, Conventional Commit messages, merged to `main` at the end of each phase
 
 ## License
